@@ -2,7 +2,7 @@
 
 [TOC]
 
-![09-yaml文件说明](/Users/wuzhixuan/Downloads/分析图/09-yaml文件说明.png)
+![09-yaml文件说明](../images/09-yaml文件说明.png)
 
 ## 一、YAML文件概述
 
@@ -28,14 +28,14 @@ k8s 集群中对资源管理和资源对象编排部署都可以通过声明样�
 
 ## 三、yaml文件的组成部分
 
-![image-20201208234446694](/Users/wuzhixuan/Library/Application Support/typora-user-images/image-20201208234446694.png)
+![image-20201208234446694](../images/image-20201208234446694.png)
 
 + 控制器定义
 + 被控制对象
 
 ## 四、常用字段含义
 
-![image-20201208234512027](/Users/wuzhixuan/Library/Application Support/typora-user-images/image-20201208234512027.png)
+![image-20201208234512027](../images/image-20201208234512027.png)
 
 
 

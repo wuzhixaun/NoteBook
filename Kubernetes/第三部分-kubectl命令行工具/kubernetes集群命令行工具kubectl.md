@@ -6,7 +6,7 @@
 
 ## 2、kubectl命令的语法
 
-+ ![08-命令行工具kubectl_20201204002438](/Users/wuzhixuan/Downloads/分析图/08-命令行工具kubectl_20201204002438.png)
++ ![08-命令行工具kubectl_20201204002438](../images/08-命令行工具kubectl_20201204002438.png)
 
 ```
 kubectl [command] [TYPE] [NAME][flags] 
@@ -34,17 +34,17 @@ kubectl --help
 
 ### 4.1 基础命令
 
-​	![image-20201208232008456](/Users/wuzhixuan/Library/Application Support/typora-user-images/image-20201208232008456.png)
+​	![image-20201208232008456](../images/image-20201208232008456.png)
 
 ### 4.2部署和集群的管理命令
 
-![image-20201208232105024](/Users/wuzhixuan/Library/Application Support/typora-user-images/image-20201208232105024.png)
+![image-20201208232105024](../images/image-20201208232105024.png)
 
 ### 4.3故障和调试命令
 
-![image-20201208232153322](/Users/wuzhixuan/Library/Application Support/typora-user-images/image-20201208232153322.png)
+![image-20201208232153322](../images/image-20201208232153322.png)
 
 ### 4.4 其他命令
 
-![image-20201208232220293](/Users/wuzhixuan/Library/Application Support/typora-user-images/image-20201208232220293.png)
+![image-20201208232220293](../images/image-20201208232220293.png)
 
