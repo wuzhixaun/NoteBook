@@ -81,9 +81,35 @@ kubectl apply -f web1.yaml
 
 ### 4.通过分配的ip访问
 
-
-
 ## 六、升级回滚
 
+
+
+```
+// 镜像版本升级
+kubectl set image deployment web nginx=nginx:1.15
+
+// 检查版本升级状态
+kubectl rollout status deployment web
+
+// 查看升级历史版本
+kubectl rollout history deployment web
+
+//还原成上一个版本
+kubectl rollout undo deployment web
+
+// 回滚到指定的版本
+kubectl rollout undo deployment web --to-revision=3
+
+```
+
+
+
 ## 七、弹性伸缩
+
+```
+kubectl scale deployment web --replicas=1
+```
+
+
 
