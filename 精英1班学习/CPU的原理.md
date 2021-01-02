@@ -14,7 +14,7 @@
 
 ## 三、计算机的组成
 
-![计算机组成](../image/计算机组成.png)
+![计算机组成](image/计算机组成.png)
 
 
 
@@ -32,7 +32,7 @@
 
 ## 五、CPU的乱序执行
 
-![CPU的乱序执行](/Users/wuzhixuan/NoteBook/精英1班学习/image/CPU的乱序执行.png)
+![CPU的乱序执行](image/CPU的乱序执行.png)
 
 ## 六、有序性保障
 
