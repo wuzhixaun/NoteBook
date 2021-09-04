@@ -33,3 +33,18 @@ lsof(list open files)是一个列出当前系统打开文件的工具。在linux
 
 
 ## tcpdump
+
+
+
+
+
+
+
+### 网络IO 变化 模型
+
+同步、异步、阻塞、非阻塞
+
+
+
+> strace -ff -o out cmd 
+
