@@ -6,7 +6,7 @@ Shiro是一个强大的简单易用的Java安全框架，主要用来更便捷�
 
 Shiro是一个有许多特性的全面的安全框架，下面这幅图可以了解Shiro的特性：
 
-![img](http://cdn.wuzx.cool/426671-4f553a3555dcf438.png)
+![img](E:\Users\admin\Pictures\Saved Pictures\426671-4f553a3555dcf438.png)
 
 可以看出shiro除了基本的认证，授权，会话管理，加密之外，还有许多额外的特性。
 
@@ -14,7 +14,7 @@ Shiro是一个有许多特性的全面的安全框架，下面这幅图可以了
 
 Shiro有三个主要的概念：`Subject`，`SecurityManager`，`Realms`
 
-![img](http://cdn.wuzx.cool/426671-5458508e59ae958a.png)
+![img](E:\Users\admin\Pictures\Saved Pictures\426671-5458508e59ae958a.png)
 
 + `Subject`：当前参与应用安全部分的主角。可以是用户，可以试第三方服务，可以是cron 任务，或者任何东西。主要指一个正在与当前软件交互的东西。
      所有Subject都需要SecurityManager，当你与Subject进行交互，这些交互行为实际上被转换为与SecurityManager的交互
@@ -25,11 +25,11 @@ Shiro有三个主要的概念：`Subject`，`SecurityManager`，`Realms`
 + `Realms`：Realms作为Shiro和你的应用的连接桥，当需要与安全数据交互的时候，像用户账户，或者访问控制，Shiro就从一个或多个Realms中查找。
      Shiro提供了一些可以直接使用的Realms，如果默认的Realms不能满足你的需求，你也可以定制自己的Realms
 
-![img](https://upload-images.jianshu.io/upload_images/426671-d2c043d97b735c9e.png?imageMogr2/auto-orient/strip|imageView2/2/w/525/format/webp)
+![img](E:\Users\admin\Pictures\Saved Pictures\webp)
 
 # 身份认证流程
 
-![img](https://atts.w3cschool.cn/attachments/image/wk/shiro/4.png)
+![img](E:\Users\admin\Pictures\Saved Pictures\4.png)
 
 流程如下：
 
@@ -41,7 +41,7 @@ Shiro有三个主要的概念：`Subject`，`SecurityManager`，`Realms`
 
 # 授权流程
 
-![img](https://atts.w3cschool.cn/attachments/day_210114/202101141719562904.png)
+![img](E:\Users\admin\Pictures\Saved Pictures\202101141719562904.png)
 
 ## 流程如下：
 
