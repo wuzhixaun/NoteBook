@@ -202,10 +202,10 @@ configurations.removeAll(exclusions);
 configurations = filter(configurations, autoConfigurationMetadata);
 // 【4】获取了符合条件的自动配置类后，此时触发AutoConfigurationImportEvent事件，
 // 目的是告诉ConditionEvaluationReport条件评估报告器对象来记录符合条件的自动配置类
-// 该事件什么时候会被触发?--> 在刷新容器时调用invokeBeanFactoryPostProcessors后置处
-理器时触发
+// 该事件什么时候会被触发?--> 在刷新容器时调用invokeBeanFactoryPostProcessors后置处理器时触发
 fireAutoConfigurationImportEvents(configurations, exclusions);
-// 【5】将符合条件和要排除的自动配置类封装进AutoConfigurationEntry对象，并返回 return new AutoConfigurationEntry(configurations, exclusions);
+// 【5】将符合条件和要排除的自动配置类封装进AutoConfigurationEntry对象，并返回 
+  return new AutoConfigurationEntry(configurations, exclusions);
 }
 
 
