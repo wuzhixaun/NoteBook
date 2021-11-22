@@ -1,6 +1,6 @@
 # 一、依赖管理
 
-## 1.1 **为什么导入dependency时不需要指定版本**
+##  **为什么导入dependency时不需要指定版本**
 
 ``` xml
 <!-- Spring Boot父项目依赖管理 -->    
@@ -221,3 +221,144 @@ fireAutoConfigurationImportEvents(configurations, exclusions);
 5. 最后Spring再将筛选后自动配置的类注入到IOC容器
 
 ![image-20211122002552109](https://cdn.wuzx.cool/image-20211122002552109.png)
+
+# 三、自定义Starter
+
+## SpringBoot starter机制
+
+> SpringBoot中的starter是一种非常重要的机制，能够抛弃以前繁杂的配置，将其统一集成进 starter，应用者只需要在maven中引入starter依赖，SpringBoot就能自动扫描到要加载的信息并 启动相应的默认配置。starter让我们摆脱了各种依赖库的处理，需要配置各种信息的困扰。 SpringBoot会自动通过classpath路径下的类发现需要的Bean，并注册进IOC容器。SpringBoot提 供了针对日常企业应用研发各种场景的spring-boot-starter依赖模块。所有这些依赖模块都遵循着 约定成俗的默认配置，并允许我们调整这些配置，即遵循“约定大于配置”的理念。	
+
+## 自定义starter的命名规则
+
+> SpringBoot提供的starter以 spring-boot-starter-xxx 的方式命名的。
+>
+> 官方建议自定义的starter使用 xxx-spring-boot-starter 命名规则。以区分SpringBoot生态提供 的starter
+
+## 关于条件注解的讲解
+
++ @ConditionalOnBean：仅仅在当前上下文中存在某个对象时，才会实例化一个Bean。 
++ @ConditionalOnClass：某个class位于类路径上，才会实例化一个Bean。 
++ @ConditionalOnExpression：当表达式为true的时候，才会实例化一个Bean。基于SpEL表 达式的条件判断。 =
++ @ConditionalOnMissingBean：仅仅在当前上下文中不存在某个对象时，才会实例化一个 Bean
++ @ConditionalOnMissingClass：某个class类路径上不存在的时候，才会实例化一个Bean
++ @ConditionalOnNotWebApplication：不是web应用，才会实例化一个Bean。 
++ @ConditionalOnWebApplication：当项目是一个Web项目时进行实例化。 
++ @ConditionalOnProperty：当指定的属性有指定的值时进行实例化。
++  @ConditionalOnJava：当JVM版本为指定的版本范围时触发实例化。 
++ @ConditionalOnResource：当类路径下有指定的资源时触发实例化。 
++ @ConditionalOnJndi：在JNDI存在的条件下触发实例化。 
++ @ConditionalOnSingleCandidate：当指定的Bean在容器中只有一个，或者有多个但是指定 了首选的Bean时触发实例化。
+
+## 自定义starter代码实现
+
+### 1.导入配依赖
+
+``` pom
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>2.2.9.RELEASE</version>
+        </dependency>
+    </dependencies>
+```
+
+### 2. 创建 SimpleBean
+
+``` java
+@EnableConfigurationProperties
+@ConfigurationProperties(prefix = "simplebean")
+public class SimpleBean {
+
+    private int id;
+    private String name;
+  .... getset方法
+}
+```
+
+### 3.编写自动配置类
+
+``` java
+@Configuration
+public class MyAutoConfiguration {
+    static {
+        System.out.println("MyAutoConfiguration init....");
+    }
+    @Bean
+    public SimpleBean simpleBean(){
+        return new SimpleBean();
+    }
+}
+```
+
+### 4.使用starter
+
+> 导入
+>
+> ```
+> <dependency>
+>     <groupId>com.wuzx</groupId>
+>     <artifactId>zdy-springboot-stater</artifactId>
+>     <version>1.0-SNAPSHOT</version>
+> </dependency>
+> ```
+
+### 5.测试
+
+``` java
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class TestStarter {
+    @Autowired
+    private SimpleBean simpleBean;
+    @Test
+    public void testStater() {
+        System.out.println(simpleBean);
+    }
+}
+
+// 结果
+SimpleBean{id=666, name='wuzhixaun'}
+```
+
+### 6.热插拔技术
+
+还记得我们经常会在启动类Application上面加@EnableXXX注解吗？
+
+``` java
+@SpringBootApplication
+@EnableRegisterServer
+public class SpringbootDemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(SpringbootDemoApplication.class, args);
+    }
+}
+```
+
+#### 改造
+
++ 新增标记类ConfigMarker
+
+``` java
+public class ConfigMarker {
+  
+}
+```
+
++ 新增EnableRegisterServer 注解
+
+```
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Import({ConfigMarker.class}) // 将ConfigMarker导入并创建给IOC容器
+public @interface EnableRegisterServer {
+}
+```
+
++ 在启动类上新增@EnableImRegisterServer注解
+
+其实这个@Enablexxx注解就是一种热拔插技术，加了这个注解就可以启动对应的starter，当不需 要对应的starter的时候只需要把这个注解注释掉就行
+
+## 总结
+
+> 到此热插拔就实现好了，当你加了 @EnableImRegisterServer 的时候启动zdy工程就会自动装配 SimpleBean，反之则不装配。 让的原理也很简单，当加了 @EnableImRegisterServer 注解的时候，由于这个注解使用了 @Import({ConfigMarker.class}) ，所以会导致Spring去加载 ConfigMarker 到上下文中，而 又因为条件注解 @ConditionalOnBean(ConfigMarker.class) 的存在，所以 MyAutoConfiguration 类就会被实例化。
