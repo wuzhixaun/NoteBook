@@ -42,3 +42,28 @@
 6.  到达Consumer中的 Server 在这里进行 反编码 和 反序列化的接收数据 
 7. 使用Exporter选择执行器
 8. 交给Filter 进行一个提供者端的过滤 到达 Invoker 执行器 9. 通过Invoker 调用接口的具体实现 然后返回
+
+# 三、Dubbo源码介绍
+
+![image-20220304000851060](https://cdn.wuzx.cool/image-20220304000851060.png)
+
+**分层介绍****:
+ Business 业务逻辑层
+
+service 业务层 包括我们的业务代码 比如 接口 实现类 直接面向开发者 RPC层 远程过程调用层
+
+config 配置层 对外提供配置 以ServiceConfig ReferenceConfig 为核心 可以直接初始化配置 类 也可以解析配置文件生成
+
+proxy 服务代理层 无论是生产者 还是消费者 框架都会产生一个代理类 整个过程对上层透明 就是 业务层对远程调用无感
+
+registry 注册中心层 封装服务地址的注册与发现 以服务的URL为中心
+ cluster 路由层 (集群容错层) 提供了多个提供者的路由和负载均衡 并且它桥接注册中心 以
+
+Invoker为核心
+ monitor 监控层 RPC调用相关的信息 如 调用次数 成功失败的情况 调用时间等 在这一层完成
+
+protocol 远程调用层 封装RPC调用 无论是服务的暴露 还是 服务的引用 都是在Protocol中作为主 功能入口 负责Invoker的整个生命周期 Dubbo中所有的模型都向Invoker靠拢
+
+Remoting层 远程数据传输层
+ exchange 信息交换层 封装请求和响应的模式 如把请求由同步 转换成异步
+ transport 网络传输层 统一网络传输的接口 比如 netty 和 mina 统一为一个网络传输接口 serialize 数据序列化层 负责管理整个框架中的数据传输的序列化 和反序列化
