@@ -82,7 +82,7 @@ try {
 
 **Resource**定位:指对BeanDefinition的资源定位过程。通俗讲就是找到定义Javabean信息的XML文 件，并将其封装成Resource对象。
 
-**BeanDe****fi****nition**载入 :把用户定义好的Javabean表示为IoC容器内部的数据结构，这个容器内部的数 据结构就是BeanDefinition。
+**BeanDefinition**载入 :把用户定义好的Javabean表示为IoC容器内部的数据结构，这个容器内部的数 据结构就是BeanDefinition。
 
 注册**BeanDefinition**到 **IoC** 容器
 
