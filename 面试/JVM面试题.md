@@ -225,6 +225,43 @@ https://processon.com/diagraming/62bfcd060e3e74659206bd4a
 > + 每一个类都会被尽可能的加载(从引导类加载器往下，每个加载器都可能会根据优先次序尝试加载它
 > + 有效避免了某些恶意类的加载(比如自定义了Java.lang.Object类，一般而言在双亲委派模型 下会加载系统的Object类而不是自定义的Object类)
 
+## 为什么要使用双亲委派机制
+
++ 安全机制:例如我们自己写的String(java.lang.String.class)类不会被加载，这样防止核心类库被篡改
++ 避免类的重复加载，当父类加载器已经加载了这个类，子类加载器没必要在加载一遍，保证被加载类的唯一性
+
+## 自定义类加载器 
+
+> 重写findCLass(name) 方法
+
+## 打破双亲委派机
+
+> ``` java
+> loadClass(String name, boolean resolve) {
+>   
+>   try{
+>     Class<?> c = findLoadedClass(name);
+>     
+>     if(c== null ){
+>       if(parent != null){
+>         // 使用父类加载器
+>          c = parent.loadClass(name, false);
+>       }else{ 
+>         // 使用引导类加载器
+>         c = findBootstrapClassOrNull(name);
+>       }
+>      
+>     }
+>     
+>     if(c == null){
+>       c = findClass(name);
+>     }
+>   }  
+> }
+> ```
+>
+> 所以打破双亲委派机制就是 重写loadClass方法
+
 # 8. **JVM8**为什么要增加元空间，带来什么好处?
 
 > + 字符串存在永久代中，容易出现性能问题和内存溢出。
