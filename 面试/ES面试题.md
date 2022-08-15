@@ -257,5 +257,27 @@ es的默认配置是一个非常合理的默认配置，绝大多数情况下是
 
 - 一个合理的ES集群配置应不少于5台服务器，避免脑裂时无法选举出新的Master节点的情况，另外可能还需要一些其他的单独的节点，比如ELK系统中的Kibana、Logstash等。
 
-# ElasticSeach 查询原理
+# es写入原理
 
+![image-20220712164128083](https://cdn.wuzx.cool/image-20220712164128083.png)
+
+> + node1接受请求，那么node就是协调节点，根据doc_id 计算shard的位置（shard = hash(id) % 主分片的数量）
+> + 然后确定分片的位置在哪一个节点（node3），将请求转发到node3，因为分片 0 的主分片目前被分配在 Node 3 上
+> + node3在主分片0执行写入操作，写入操作的内部原理
+>     + `write:新增document，将document加入到内存buffer中，并且记录translog信息
+>     + `refresh`:隔一段时间间隔(refresh_interval)1s refresh 生成segment(这个就是倒排索引),然后将segment放在系统缓存中，并将segment的状态设置未open，这个时候可以搜索，清空buffer
+>     + `flush `:当translog信息越来越大或者每隔20分钟就会触发
+>         + 清空buffer ，生成segment
+>         + 调用fysnc,将缓存的segment写入磁盘
+>         + 清空translogs,commit ponit被写入磁盘，标明了所有Segment
+>     + 
+> + 主分片写入成功之后，同步到所有的副分片，成功之后node3向协调节点报告写入成功
+
+# es 查询原理
+
+读请求可以从 primary shard 或 replica shard 读取，采用的是随机轮询算法。
+
+> + 客户端发起一个查询请求，协调节点接受请求
+> + 协调将请求转发到所有的shard(可以是主分片或者副分片，采用的是随机轮询算法)
+> + 每个shard 将自己的所有结果的doc_id 返回给协调节点，由协调节点进行数据的合并、排序、分页。产生最终的结果（doc id list）
+> + 接着由协调节点根据doc id去各个节点拉取实际的doc 数据，返回给客户端
