@@ -28,3 +28,8 @@
 + `BoundSql`:表示动态⽣成的SQL语句以及相应的参数信息
 
 ![Mybatis层次结构](https://cdn.wuzx.cool/image-20211029150331909.png)
+
+sqlsession  最后面会有一个baseExecytor key 就是 namespace + id + sql + limit+  参数
+
+commit （执⾏插⼊、更新、删除）会清空缓存
+
