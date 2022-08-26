@@ -715,7 +715,127 @@ count(*) 是例外，mysql并不会把全部字段取出来，而是专门做了
 
 + mysql 中数据以`页`为单位，innodb_page_size 每页是16kb，每次修改数据都是将每页从硬盘查询出来，放在`Buffer pool`中。后续的查询都是从`buffer pool`中查询，如果没有命中再去磁盘中查询
 + 更新表的数据是直接更新`buffer pool` 中的数据,直接在`buffer pool`中更新
-+ 在某个数据页上做了什么修改 `redo log buffer`,后面刷盘到 redo log 日志文件中
++ 在某个数据页上做了什么修改，记录到 `redo log buffer`,后面·清空redo log buffer刷盘到 redo log 日志文件中
 
 ### redo log 刷盘
 
+`Innodb`存储引擎为`redo log`的刷盘有三种策略，可以通过参数`innodb_flush_log_at_trx_commit`设置
+
++ 0：设置为0，每次事务提交不进行刷盘
++ 1：设置为1，每次事务提交都进行刷盘(默认),也就是说当事务提交时会调用 `fsync` 对 redo log 进行刷盘
++ 2：设置为2，每次事务提交都只是将`redo log buffer`内容写入`page cache`
+
+![image-20220824175223918](https://cdn.wuzx.cool/image-20220824175223918.png)
+
+`InnoDB` 存储引擎有一个后台线程，每隔`1` 秒，就会把 `redo log buffer` 中的内容写到文件系统缓存（`page cache`），然后调用 `fsync` 刷盘。
+
+### innodb_flush_log_at_trx_commit=0
+
+![image-20220824175540279](https://cdn.wuzx.cool/image-20220824175540279.png)
+
+> 每次事务提交，不进行刷盘，如果mysql 宕机，那么会丢失1s内的数据，因为有一个后台线程会每隔1s将redo log buffer 内容写入到page cache，然后调用fsync进行刷盘
+
+### innodb_flush_log_at_trx_commit=1(mysql默认的刷盘策略)
+
+![image-20220824175814138](https://cdn.wuzx.cool/image-20220824175814138.png)
+
+> 当`innodb_flush_log_at_trx_commit=1`,redo log 记录一定在硬盘中，因为事务提交，就会进行主动刷盘，就算mysql宕机，因为事务没有提交，所以这部分日志丢失也没有关系
+
+###  innodb_flush_log_at_trx_commit=2
+
+![image-20220824180026077](https://cdn.wuzx.cool/image-20220824180026077.png)
+
+> 为`2`时， 只要事务提交成功，`redo log buffer`中的内容只写入文件系统缓存（`page cache`）
+>
+> 如果仅仅只是`MySQL`挂了不会有任何数据丢失，但是宕机可能会有`1`秒数据的丢失。
+
+
+
+## binlog
+
+> 二进制日志`binlog`可以说是MySQL最重要的日志，属于`MYSQL Server层`它记录了所有的DDL和DML语句（除了数据查询语句select）,以事件形式记录，还包含语句所执行的消耗的时间，MySQL的二进制日志是事务安全型的
+>
+> + DDL(Data Definition Language) 数据库定义语言 ，主要的命令有create、alter、drop等，ddl主要是用在定义或改变表(table)的结构,数据类型，表之间的连接和约束等初始工作上，他们大多在建表时候使用
+> + DML(Data Manipulation Language) 数据操纵语言,主要命令是select,update,insert,delete,就像它的名字一样，这4条命令是用来对数据库里的数据进行操作的语言
+
+### 使用场景
+
+![image-20220825145131094](https://cdn.wuzx.cool/image-20220825145131094.png)
+
++ 主从复制
++ 数据恢复，可以通过mysqlbinlog工具来进行数据恢复
+
+### 记录格式
+
+`binlog`日志有三种格式，可以通过`binlog_format`参数指定`statement`、`row`、`mixed`
+
+#### statement
+
+> 指定`statement`，记录的内容是`SQL`语句原文，比如执行一条`update T set update_time=now() where id=1`，记录的内容如下。
+>
+> ![image-20220825145756091](https://cdn.wuzx.cool/image-20220825145756091.png)
+>
+> 同步数据时，会执行记录的`SQL`语句，但是有个问题，`update_time=now()`这里会获取当前系统时间，直接执行会导致与原库的数据不一致。
+>
+> 为了解决这个问题可以指定为`row`
+
+#### row
+
+> 指定`row`,记录的内容不再是简单的`SQL`,还包含具体数据
+>
+> ![image-20220825150230410](https://cdn.wuzx.cool/image-20220825150230410.png)`row`格式记录的内容看不到详细信息，要通过`mysqlbinlog`工具解析出来。
+>
+> `update_time=now()`变成了具体的时间`update_time=1627112756247`，条件后面的@1、@2、@3 都是该行数据第 1 个~3 个字段的原始值（**假设这张表只有 3 个字段**）。
+>
+> 这样就能保证同步数据的一致性，通常情况下都是指定为`row`，这样可以为数据库的恢复与同步带来更好的可靠性。
+>
+> 但是这种格式，需要更大的容量来记录，比较占用空间，恢复与同步时会更消耗`IO`资源，影响执行速度。
+>
+> 所以就有了一种折中的方案，指定为`mixed`，记录的内容是前两者的混合。
+>
+> `MySQL`会判断这条`SQL`语句是否可能引起数据不一致，如果是，就用`row`格式，否则就用`statement`格式
+
+## binlog 二进制日志写入
+
+binlog写入，先将binlog日志写入到`binlog cache`，事务提交的时候，把`binlog cache`写入到`binlog`文件中。因为一个事务的binlog不能被拆开，所以无论这个事务多大，都要一次性写入，所以给每个线程都分配binlog cache,可以通过 `binlog_cache_size`设置单个线程`binlog cache`大小
+
+![image-20220825151940943](https://cdn.wuzx.cool/image-20220825151940943.png)
+
++ **write，是指把日志写入到文件系统的 page cache，并没有把数据持久化到磁盘，所以速度比较快**
++ **sync，才是将数据持久化到磁盘的操作**
++ `write`和`fsync`的时机，可以由参数`sync_binlog`控制，默认是`0`
+    + `sync_binlog = 0`,每次提交事务，都只是`write`将binglog写入到`page cache`中,由系统判断什么时候 `fsync`
+    + `sync_binlog =1 `,每次提交事务，都会执行`fsync`，安全起见可以设置为1
+    + `sync_binlog =N`表示每次提交事务都`write`，但累积`N`个事务后才`fsync`
+
+## 两阶段提交
+
+在执行更新语句过程，会记录`redo log`与`binlog`两块日志，以基本的事务为单位，`redo log`在事务执行过程中可以不断写入，而`binlog`只有在提交事务时才写入，所以`redo log`与`binlog`的写入时机不一样，
+
+### `redo log`与`binlog`两份日志之间的逻辑不一致，会出现什么问题？
+
+> 假设`id=2`的记录，字段`c`值是`0`，把字段`c`值更新成`1`，`SQL`语句为`update T set c=1 where id=2`。假设执行过程中写完`redo log`日志后，`binlog`日志写期间发生了异常
+>
+> ![image-20220825154248895](https://cdn.wuzx.cool/image-20220825154248895.png)
+
+由于`binlog`没写完就异常，这时候`binlog`里面没有对应的修改记录。因此，之后用`binlog`日志恢复数据时，就会少这一次更新，恢复出来的这一行`c`值是`0`，而原库因为`redo log`日志恢复，这一行`c`值是`1`，最终数据不一致
+
+![image-20220825154304997](https://cdn.wuzx.cool/image-20220825154304997.png)
+
+### 为了解决两份日志之间的逻辑一致问题，`InnoDB`存储引擎使用**两阶段提交**方案。
+
+> 原理很简单，将`redo log`的写入拆成了两个步骤`prepare`和`commit`，这就是**两阶段提交**。
+
+![image-20220825154522376](https://cdn.wuzx.cool/image-20220825154522376.png)
+
+#### redo log 处于prepare阶段宕机
+
+![image-20220825154624933](https://cdn.wuzx.cool/image-20220825154624933.png)
+
++ 如果是在prepare阶段宕机，那么mysql重启的时候会判断redo log是否commit状态，如果是commit 直接根据redolog提交事务，如果是否，则根据事务id找到binlog日志，可以找到就提交事务，恢复数据
+
+### `redo log`设置`commit`阶段发生异常，那会不会回滚事务
+
+![image-20220825154931214](https://cdn.wuzx.cool/image-20220825154931214.png)
+
+MySQL InnoDB 引擎使用 **redo log(重做日志)** 保证事务的**持久性**，使用 **undo log(回滚日志)** 来保证事务的**原子性**。
